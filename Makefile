@@ -5,8 +5,8 @@ GREEN := \033[0;32m
 RED   := \033[0;31m
 NC    := \033[0m
 
-DOCKER_ORG_NAME = teslagov
-DOCKER_IMAGE_NAME = jwt-nginx
+DOCKER_ORG_NAME = bd-360
+DOCKER_IMAGE_NAME = nginx-jwt
 
 .PHONY: all
 all:
@@ -38,13 +38,6 @@ stop-nginx:
 .PHONY: start-nginx
 start-nginx:
 	docker run --rm --name "$(DOCKER_IMAGE_NAME)-cont" -d -p 8000:8000 $(DOCKER_ORG_NAME)/$(DOCKER_IMAGE_NAME)
-	docker cp $(DOCKER_IMAGE_NAME)-cont:/usr/lib64/nginx/modules/ngx_http_auth_jwt_module.so .
-	docker cp $(DOCKER_IMAGE_NAME)-cont:/usr/local/lib/libjansson.so.4.13.0 .
-	docker cp $(DOCKER_IMAGE_NAME)-cont:/usr/local/lib/libjwt.a .
-	docker cp $(DOCKER_IMAGE_NAME)-cont:/usr/local/lib/libjwt.la .
-	docker cp $(DOCKER_IMAGE_NAME)-cont:/usr/local/lib/libjwt.so.0.7.0 .
-	docker cp $(DOCKER_IMAGE_NAME)-cont:/usr/local/lib/pkgconfig/jansson.pc .
-	docker cp $(DOCKER_IMAGE_NAME)-cont:/usr/local/lib/pkgconfig/libjwt.pc .
 
 .PHONY: build-test-runner
 build-test-runner:
