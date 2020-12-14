@@ -25,6 +25,7 @@ typedef struct {
 	ngx_flag_t   auth_jwt_redirect;
 	ngx_str_t    auth_jwt_validation_type;
 	ngx_str_t    auth_jwt_algorithm;
+	ngx_str_t    auth_jwt_scope;
 	ngx_flag_t   auth_jwt_validate_email;
 
 } ngx_http_auth_jwt_loc_conf_t;
@@ -34,6 +35,7 @@ static ngx_int_t ngx_http_auth_jwt_handler(ngx_http_request_t *r);
 static void * ngx_http_auth_jwt_create_loc_conf(ngx_conf_t *cf);
 static char * ngx_http_auth_jwt_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child);
 static char * getJwt(ngx_http_request_t *r, ngx_str_t auth_jwt_validation_type);
+static int find_scope(const char *token_scopes, char *scope);
 
 static ngx_command_t ngx_http_auth_jwt_commands[] = {
 
@@ -77,6 +79,13 @@ static ngx_command_t ngx_http_auth_jwt_commands[] = {
 		ngx_conf_set_str_slot,
 		NGX_HTTP_LOC_CONF_OFFSET,
 		offsetof(ngx_http_auth_jwt_loc_conf_t, auth_jwt_algorithm),
+		NULL },
+
+	{ ngx_string("auth_jwt_scope"),
+		NGX_HTTP_MAIN_CONF|NGX_HTTP_SRV_CONF|NGX_HTTP_LOC_CONF|NGX_CONF_TAKE1,
+		ngx_conf_set_str_slot,
+		NGX_HTTP_LOC_CONF_OFFSET,
+		offsetof(ngx_http_auth_jwt_loc_conf_t, auth_jwt_scope),
 		NULL },
 
 	{ ngx_string("auth_jwt_validate_email"),
@@ -222,6 +231,12 @@ static ngx_int_t ngx_http_auth_jwt_handler(ngx_http_request_t *r)
 		sub_t = ngx_char_ptr_to_str_t(r->pool, (char *)sub);
 		set_custom_header_in_headers_out(r, &useridHeaderName, &sub_t);
 	}
+
+	if (find_scope(jwt_get_grant(jwt, "scope"), (char *)jwtcf->auth_jwt_scope.data) == 0)
+    {
+		ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Insuficient scope");
+		goto redirect;
+    }
 
 	if (jwtcf->auth_jwt_validate_email == 1)
 	{
@@ -391,6 +406,7 @@ ngx_http_auth_jwt_merge_loc_conf(ngx_conf_t *cf, void *parent, void *child)
 	ngx_conf_merge_str_value(conf->auth_jwt_key, prev->auth_jwt_key, "");
 	ngx_conf_merge_str_value(conf->auth_jwt_validation_type, prev->auth_jwt_validation_type, "");
 	ngx_conf_merge_str_value(conf->auth_jwt_algorithm, prev->auth_jwt_algorithm, "HS256");
+	ngx_conf_merge_str_value(conf->auth_jwt_scope, prev->auth_jwt_scope, "");
 	ngx_conf_merge_off_value(conf->auth_jwt_validate_email, prev->auth_jwt_validate_email, 1);
 	
 	if (conf->auth_jwt_enabled == ((ngx_flag_t) -1)) 
@@ -450,6 +466,17 @@ static char * getJwt(ngx_http_request_t *r, ngx_str_t auth_jwt_validation_type)
 	return jwtCookieValChrPtr;
 }
 
+static int find_scope(const char *token_scopes, char *scope) 
+{
+    char* token;
+    char scopes[strlen(token_scopes)+1];
+    strcpy(scopes, token_scopes);
+    char *saveptr = scopes;
+    while((token = strtok_r(saveptr, " ", &saveptr)))
+        if (strcmp(token, scope) == 0)
+            return 1;
+    return 0;
+}
 
 
 
