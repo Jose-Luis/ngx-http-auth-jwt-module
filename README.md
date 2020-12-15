@@ -1,33 +1,17 @@
 # Intro
 This is an NGINX module to check for a valid JWT and proxy to an upstream server or redirect to a login page.
 
-## Building and testing
-To build the Docker image, start NGINX, and run our Bash test against it, run
+## Building
+To build the Docker image
 ```bash
-make
+docker build . -t nginx-jwt
 ```
+This process will compile the module from sources locate on ```lib``` folder. It will generate a share object call ngx_http_auth_jwt_module.so. This object will be copied to an nginx image.
 
-When you make a change to the module, run `make rebuild-nginx`.
-
-When you make a change to `test.sh`, run `make rebuild-test-runner`.
-
-| Command                    | Description                                 |
-| -------------------------- |:-------------------------------------------:|
-| `make build-nginx`         | Builds the NGINX image                      |
-| `make rebuild-nginx`       | Re-builds the NGINX image                   |
-| `make build-test-runner`   | Builds the image that will run `test.sh`    |
-| `make rebuild-test-runner` | Re-builds the image that will run `test.sh` |
-| `make start-nginx`         | Starts the NGINX container                  |
-| `make stop-nginx`          | Stops the NGINX container                   |
-| `make test`                | Runs `test.sh` against the NGINX container  |
-
-You can re-run tests as many times as you like while NGINX is up.
-When you're done running tests, make sure to stop the NGINX container.
-
-The Dockerfile builds all of the dependencies as well as the module,
-downloads a binary version of NGINX, and runs the module as a dynamic module.
-
-Tests get executed in containers. This project is 100% Docker-ized.
+## Starting
+```bash
+docker run -p 8000:8000 nginx-jwt
+```
 
 ## Dependencies
 This module depends on the [JWT C Library](https://github.com/benmcollins/libjwt)
@@ -44,6 +28,7 @@ auth_jwt_key "00112233445566778899AABBCCDDEEFF00112233445566778899AABBCCDDEEFF";
 auth_jwt_loginurl "https://yourdomain.com/loginpage";
 auth_jwt_enabled on;
 auth_jwt_algorithm HS256; # or RS256
+auth_jwt_scope my_scope;  
 auth_jwt_validate_email on;  # or off
 ```
 
@@ -86,3 +71,7 @@ auth_jwt_validate_email off;
 By default, the module will attempt to validate the email address field of the JWT, then set the x-email header of the
 session, and will log an error if it isn't found.  To disable this behavior, for instance if you are using a different
 user identifier property such as 'sub', set `auth_jwt_validate_email` to the value `off`.
+
+By default the auth_jwt_scope directive will be empty, in case it will be set then its value will be compare with the scopes 
+present on token if some of them match with the value the request will be authorized, otherwise the request 
+will be rejected.

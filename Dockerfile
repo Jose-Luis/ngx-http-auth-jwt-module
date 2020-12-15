@@ -22,5 +22,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y libjwt-dev
 COPY --from=module_builder /src/nginx/objs/ngx_http_auth_jwt_module.so /usr/lib/nginx/modules
 COPY config/nginx.conf /etc/nginx/nginx.conf
 COPY config/gateway.conf /etc/nginx/conf.d/gateway.conf
+COPY config/routes /etc/nginx/conf.d/routes
 
 EXPOSE 8000

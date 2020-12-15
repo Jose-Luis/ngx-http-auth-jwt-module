@@ -232,7 +232,7 @@ static ngx_int_t ngx_http_auth_jwt_handler(ngx_http_request_t *r)
 		set_custom_header_in_headers_out(r, &useridHeaderName, &sub_t);
 	}
 
-	if (find_scope(jwt_get_grant(jwt, "scope"), (char *)jwtcf->auth_jwt_scope.data) == 0)
+	if (jwtcf->auth_jwt_scope.len > 0 && find_scope(jwt_get_grant(jwt, "scope"), (char *)jwtcf->auth_jwt_scope.data) == 0)
     {
 		ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Insuficient scope");
 		goto redirect;
